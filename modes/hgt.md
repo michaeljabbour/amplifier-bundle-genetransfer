@@ -11,7 +11,7 @@ mode:
   contributes:
     agents:
       hgt-orchestrator:
-        source: "@hgt:agents/hgt-orchestrator.md"
+        source: "@hgt:agents/hgt-orchestrator"
     context:
       - "@hgt:context/hgt-runbook.md"
 ---

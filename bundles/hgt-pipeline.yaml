@@ -6,6 +6,10 @@
 #          HOST_B_KIND=rust FORGE_TOOL=~/.claude/skills/amplifier-skill-forge/tools/forge.py \
 #          LEDGER_FILE=pipelines/hgt-ledger.tsv SCOPE="..."
 # For param-driven runs that reach tool_command too, prefer run_pipeline (see README).
+#
+# LAUNCH FROM THE REPO ROOT. The engine resolves dot_file against the process CWD
+# (bare open(), no bundle-relative resolution — verified in loop-pipeline source),
+# so `dot_file: pipelines/hgt.dot` only resolves when CWD == this repo's root.
 bundle:
   name: hgt-pipeline
   version: 0.1.0
@@ -16,4 +20,4 @@ includes:
 session:
   orchestrator:
     config:
-      dot_file: ../pipelines/hgt.dot
+      dot_file: pipelines/hgt.dot

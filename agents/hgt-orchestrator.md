@@ -6,6 +6,14 @@ meta:
     wave of self-delegated workers that transfer each capability into the host rep(s),
     gated by unit tests + a real-terminal forge check, one PR per capability per host.
     Use to EXECUTE a transfer once source/host/scope are known.
+
+    <example>
+    user: 'Port the missing opencode capabilities into newtui and newtui-rust'
+    assistant: 'I'll delegate to hgt:hgt-orchestrator with the donor/host paths and
+    scope — it gap-checks, seeds the ledger, and runs the max-parallel transfer wave.'
+    <commentary>Execution of a defined transfer belongs to the orchestrator; planning
+    or explaining belongs to hgt-expert.</commentary>
+    </example>
 model_role: [critical-ops, reasoning, general]
 # Inline orchestrator so this agent never inherits a parent loop-pipeline and recurses
 # if it is ever spawned as a pipeline node (foundation guidance).
