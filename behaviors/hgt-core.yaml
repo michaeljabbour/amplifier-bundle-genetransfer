@@ -1,0 +1,32 @@
+# hgt-core — the composable HGT behavior. Compose `hgt:behaviors/hgt-core` into any
+# bundle (or run the root `hgt` bundle) to get the transfer tools, the /hgt mode
+# system, the orchestrator/expert agents, and the thin awareness context.
+tools:
+  - module: tool-filesystem
+    source: git+https://github.com/microsoft/amplifier-module-tool-filesystem@main
+  - module: tool-bash
+    source: git+https://github.com/microsoft/amplifier-module-tool-bash@main
+  - module: tool-search
+    source: git+https://github.com/microsoft/amplifier-module-tool-search@main
+  - module: tool-task
+    source: git+https://github.com/microsoft/amplifier-module-tool-task@main
+  # Mode system (self-contained: direct module sources, not `- bundle: modes`).
+  - module: tool-mode
+    source: git+https://github.com/microsoft/amplifier-bundle-modes@main#subdirectory=modules/tool-mode
+    config:
+      gate_policy: warn
+hooks:
+  # hooks-mode does mode discovery (scans <bundle>/modes/), enforcement, injection.
+  - module: hooks-mode
+    source: git+https://github.com/microsoft/amplifier-bundle-modes@main#subdirectory=modules/hooks-mode
+    config:
+      search_paths: []
+agents:
+  include:
+    - hgt:hgt-orchestrator
+    - hgt:hgt-expert
+context:
+  # THIN (<500 tokens) — accumulates into every composer. The heavy runbook is
+  # @-mentioned from the orchestrator agent + the /hgt mode, not here.
+  include:
+    - hgt:context/hgt-awareness.md

@@ -1,0 +1,116 @@
+// HGT — the Horizontal Gene-Transfer attractor (archetype graph).
+//
+// Transfers ONE capability per loop from a donor repo (any language) into one or
+// two host repos, RE-EXPRESSED through each host's own seams — never a code graft.
+// Gated by the host's unit suite AND a real-terminal forge check before a PR opens.
+//
+// ENGINE: attractor loop-pipeline. `box` = LLM agent; `parallelogram` = deterministic
+// tool node routed on its LAST printed stdout line (context.tool.last_line, matched
+// by EXACT string equality; stderr ignored; non-zero exit leaves last_line STALE —
+// which is why every gate ends `... && printf pass || printf fail`, never remove it).
+//
+// PARAMETERS reach tool nodes as UPPERCASE SHELL ENV VARS (fail-loud). Export them
+// before launch, OR pass identically-named params via run_pipeline (which seeds them
+// as flat context keys). Do NOT rely on a mounted orchestrator's `config.params` for
+// tool_command substitution — that path reaches prompts only, not tool_command
+// (engine limitation; see docs/DESIGN_DECISIONS.md).
+//   DONOR_PATH     abs path to the donor repo (READ-ONLY)
+//   HOST_A_PATH    abs path to host A (the primary/backend host)
+//   HOST_A_KIND    python | rust | new:<lang>   (selects host A's gate stack)
+//   HOST_B_PATH    abs path to host B (only for TARGET in {ab,split})
+//   HOST_B_KIND    python | rust | new:<lang>
+//   FORGE_TOOL     abs path to amplifier-skill-forge/tools/forge.py
+//   LEDGER_FILE    ledger path relative to HOST_A_PATH (e.g. pipelines/hgt-ledger.tsv)
+//   SCOPE          free-text scope statement (what transfers; exclusions)
+//
+// LEDGER row = <slug>\t<target>\t<state>. target in {a, ab, split}:
+//   a     — host A only (a second host, if any, gets it free over A's protocol)
+//   ab    — pure client-side capability: BOTH hosts, each with its own tests/goldens
+//   split — host-A backend/protocol FIRST, then client in both (seed as two ordered
+//           rows: <slug>-backend (a), then <slug>-client (ab))
+// state in {new, implemented, acknowledged}. Keyed by capability SLUG.
+//
+// MODELS: claude-opus-4-8 on every LLM node (fable-5 refuses autonomous porting).
+
+digraph hgt {
+    graph [
+        goal="Re-express each capability in the ledger through the host's OWN seams. NEVER import, vendor, or copy donor source (document the behavioral contract; the donor may be any language). Obey each host's conventions and layering. Gate every transfer on the host unit suite AND a real-terminal forge check. One ledger row per loop; one PR per host; never commit to a protected branch. Done when no 'new' rows remain.",
+        default_fidelity="truncate",
+        default_max_retry="3"
+    ]
+
+    start [shape=Mdiamond]
+
+    // --- loop head: params present? any work left? (deterministic, fail-loud) ---
+    CheckLedger [shape=parallelogram,
+        tool_command=": \"${DONOR_PATH:?set DONOR_PATH}\" \"${HOST_A_PATH:?set HOST_A_PATH}\" \"${HOST_A_KIND:?set HOST_A_KIND}\" \"${FORGE_TOOL:?set FORGE_TOOL}\" \"${LEDGER_FILE:?set LEDGER_FILE}\"; cd \"$HOST_A_PATH\" && test \"$(LEDGER_FILE=$LEDGER_FILE python3 pipelines/ledger.py earliest)\" = NONE && printf done || printf process"]
+
+    // --- pick the earliest 'new' capability; capture slug + target ---
+    SelectCapability [shape=box, llm_provider="anthropic", llm_model="claude-opus-4-8",
+        prompt="In $HOST_A_PATH run `LEDGER_FILE=$LEDGER_FILE python3 pipelines/ledger.py earliest` — it prints '<slug> <target>'. Read the capability's one-line summary and donor pointer for <slug> from the run's capability spec (the ledger's companion doc, e.g. pipelines/*-capabilities.md). Scope for this run: $SCOPE. Write TWO files under $HOST_A_PATH/.ai/: (1) hgt_current.md — slug, target, a one-paragraph capability summary, the donor pointer VERBATIM; (2) hgt_current.env — exactly two lines `SLUG=<slug>` and `TARGET=<target>`. Delete .ai/hgt_retries if present. $goal"]
+
+    // --- fresh per-capability branch in each targeted host (deterministic) ---
+    BranchSetup [shape=parallelogram,
+        tool_command="cd \"$HOST_A_PATH\" && set -a && . .ai/hgt_current.env && set +a && rm -f .ai/hgt_retries && git stash -q --include-untracked -- ':!.ai' 2>/dev/null; git checkout -q main && git pull -q --ff-only 2>/dev/null; git checkout -q -B hgt/$SLUG; case \"$TARGET\" in ab|split) cd \"$HOST_B_PATH\" && git checkout -q main && git pull -q --ff-only 2>/dev/null; git checkout -q -B hgt/$SLUG;; esac; printf ready"]
+
+    // --- study the donor WITHOUT copying (behavioral contract only; observe via forge) ---
+    LocateDonor [shape=box, llm_provider="anthropic", llm_model="claude-opus-4-8",
+        prompt="Read $HOST_A_PATH/.ai/hgt_current.md. In the donor at $DONOR_PATH, locate the construct(s) implementing this capability (start from the donor pointer). Record the BEHAVIORAL CONTRACT ONLY — inputs, outputs, config keys, protocol/wire shape, edge cases, user-facing UX — in $HOST_A_PATH/.ai/hgt_donor.md. Do NOT copy source; you are documenting the gene, not grafting the organ. State explicitly which parts are backend logic vs pure client render (this decides what lands in host A vs a client). Where UX matters and forge can drive the donor, boot it via $FORGE_TOOL to observe the real behavior live. $goal"]
+
+    // --- design the re-expression per target + author the forge probe FIRST ---
+    PlanTransfer [shape=box, llm_provider="anthropic", llm_model="claude-opus-4-8",
+        prompt="Read .ai/hgt_current.md, .ai/hgt_donor.md, .ai/hgt_current.env (TARGET), and each targeted host's conventions (host A: its AGENTS.md / architecture / decision docs; host B if TARGET in {ab,split}: its migration/parity docs). Design how to re-express this capability through each host's OWN seams — never importing the donor. Name the exact files to change per host, the native primitives to reuse, and every test/golden to add. For 'split': the host-A backend + any protocol addition FIRST, then the client render. Write the plan to .ai/hgt_plan.md. THEN — acceptance-first — author the forge probe to .ai/hgt_forge_check.sh: a bash script using $FORGE_TOOL (env $FORGE) that boots the REAL host-A app and, for TARGET in {ab,split}, the REAL host-B app, and asserts the capability from screen/grep; exit 0 on success, non-zero otherwise. Derive assertions from the donor's user-facing contract — the probe is the spec. $goal"]
+
+    // --- implement the VERTICAL SLICE (feature + tests + CI parity together) ---
+    Implement [shape=box, llm_provider="anthropic", llm_model="claude-opus-4-8",
+        prompt="Read .ai/hgt_plan.md (including any appended 'Fix N' sections) and .ai/hgt_current.env for TARGET. Implement the VERTICAL SLICE in one pass — feature + unit tests + forge probe + CI parity together, never build-now-test-later — with file tools on the current branch(es): host-A changes in $HOST_A_PATH (obey its layering; client-visible behavior through its protocol; pure renderers golden-tested), host-B changes in $HOST_B_PATH when TARGET in {ab,split} (idiomatic client, behavioral-equivalence tests, never force-green). The local gate MUST equal what the host's CI runs. Regenerate goldens if a pure renderer changed. Do NOT run the suites yourself — the next node does. Append files changed (per host) to .ai/hgt_impl.log. $goal"]
+
+    // --- deterministic gate 1: host unit suites, dispatched by kind (== CI) ---
+    UnitValidate [shape=parallelogram,
+        tool_command="cd \"$HOST_A_PATH\" && set -a && . .ai/hgt_current.env && set +a; g(){ p=\"$1\"; k=\"$2\"; case \"$k\" in python) ( cd \"$p\" && uv run ruff check . && uv run ruff format --check . && uv run pyright src/ && uv run pytest -q );; rust) ( cd \"$p\" && cargo test --quiet && cargo clippy --all-targets --quiet -- -D warnings );; new:*) ( cd \"$p\" && ./ci/gate.sh );; *) echo \"unknown kind $k\" >&2; return 1;; esac; }; ok=1; g \"$HOST_A_PATH\" \"$HOST_A_KIND\" >/tmp/hgt_gate_a 2>&1 || ok=0; case \"$TARGET\" in ab|split) g \"$HOST_B_PATH\" \"$HOST_B_KIND\" >/tmp/hgt_gate_b 2>&1 || ok=0;; esac; test $ok = 1 && printf pass || printf fail"]
+
+    // --- deterministic gate 2: capability through the real terminal(s) (forge) ---
+    ForgeValidate [shape=parallelogram,
+        tool_command="cd \"$HOST_A_PATH\" && export FORGE=\"$FORGE_TOOL\" && python3 \"$FORGE\" doctor >/tmp/hgt_forge_doctor 2>&1 && bash .ai/hgt_forge_check.sh >/tmp/hgt_forge 2>&1 && printf pass || printf fail"]
+
+    // --- diagnose a failing gate; append a concrete fix (never edits source) ---
+    AnalyzeFailure [shape=box, llm_provider="anthropic", llm_model="claude-opus-4-8",
+        prompt="A validation gate failed. Read /tmp/hgt_gate_a, /tmp/hgt_gate_b, /tmp/hgt_forge, /tmp/hgt_forge_doctor and .ai/hgt_impl.log. Diagnose the root cause and append a numbered 'Fix N' section to .ai/hgt_plan.md with concrete, minimal changes, naming the host each change lands in. Do not edit source here — Implement applies the fix. Known flake: forge screen-scrape is timing-sensitive under load; if the ONLY failure is a forge assertion, say 're-run to confirm' rather than inventing a code fix. $goal"]
+
+    // --- bound the fix loop at 3 (own counter; orthogonal to engine default_max_retry) ---
+    RetryGate [shape=parallelogram,
+        tool_command="cd \"$HOST_A_PATH\" && n=$(cat .ai/hgt_retries 2>/dev/null || echo 0); n=$((n+1)); echo $n > .ai/hgt_retries; test $n -le 3 && printf retry || printf giveup"]
+
+    // --- converged: commit + PR per targeted host, mark implemented ---
+    Commit [shape=parallelogram,
+        tool_command="cd \"$HOST_A_PATH\" && set -a && . .ai/hgt_current.env && set +a && git add -A -- ':!.ai' && git commit -q -m \"feat(hgt): $SLUG\" && git push -q -u origin HEAD && gh pr create --fill --base main --head hgt/$SLUG --label hgt >/tmp/hgt_pr_a 2>&1; case \"$TARGET\" in ab|split) cd \"$HOST_B_PATH\" && git add -A && git commit -q -m \"feat(hgt): $SLUG\" && git push -q -u origin HEAD && gh pr create --fill --base main --head hgt/$SLUG --label hgt >/tmp/hgt_pr_b 2>&1;; esac; cd \"$HOST_A_PATH\" && LEDGER_FILE=$LEDGER_FILE python3 pipelines/ledger.py update $SLUG implemented >/dev/null && printf next"]
+
+    // --- could not converge: hand back to a human, keep the queue moving ---
+    MarkBlocked [shape=parallelogram,
+        tool_command="cd \"$HOST_A_PATH\" && set -a && . .ai/hgt_current.env && set +a && mkdir -p .ai/hgt_blocked && cp .ai/hgt_plan.md .ai/hgt_blocked/$SLUG.md 2>/dev/null; LEDGER_FILE=$LEDGER_FILE python3 pipelines/ledger.py update $SLUG acknowledged >/dev/null && git checkout -q main; case \"$TARGET\" in ab|split) cd \"$HOST_B_PATH\" && git checkout -q main;; esac; printf next"]
+
+    exit [shape=Msquare]
+
+    // --- flow ---
+    start -> CheckLedger
+    CheckLedger -> exit             [condition="context.tool.last_line=done"]
+    CheckLedger -> SelectCapability [condition="context.tool.last_line=process"]
+
+    SelectCapability -> BranchSetup
+    BranchSetup -> LocateDonor
+    LocateDonor -> PlanTransfer
+    PlanTransfer -> Implement
+    Implement -> UnitValidate
+
+    UnitValidate  -> ForgeValidate  [condition="context.tool.last_line=pass"]
+    UnitValidate  -> AnalyzeFailure [condition="context.tool.last_line=fail"]
+    ForgeValidate -> Commit         [condition="context.tool.last_line=pass"]
+    ForgeValidate -> AnalyzeFailure [condition="context.tool.last_line=fail"]
+
+    AnalyzeFailure -> RetryGate
+    RetryGate -> Implement   [condition="context.tool.last_line=retry"]
+    RetryGate -> MarkBlocked [condition="context.tool.last_line=giveup"]
+
+    Commit      -> CheckLedger [loop_restart="true"]
+    MarkBlocked -> CheckLedger [loop_restart="true"]
+}

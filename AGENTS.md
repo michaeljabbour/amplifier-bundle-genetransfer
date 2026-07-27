@@ -1,0 +1,38 @@
+# AGENTS.md — amplifier-bundle-genetransfer
+
+**What this repo is:** a self-contained Amplifier bundle packaging **HGT**
+(Horizontal Gene-Transfer) — a parameterized attractor that transfers a capability
+from a donor repo into one or more host repos, re-expressed through each host's own
+seams, gated by unit tests + a real-terminal forge check, one PR per capability.
+
+**Read `PRINCIPLES.md` before changing behavior** — the non-negotiables (never copy
+donor code; the forge check is the acceptance oracle; gate == CI; never a protected
+branch) live there, not here.
+
+## Key directories
+| Path | What |
+|---|---|
+| `bundle.md` | Root bundle (thin; includes `hgt:behaviors/hgt-core`) |
+| `behaviors/hgt-core.yaml` | The composable capability set (tools, mode system, agents, awareness) |
+| `bundles/` | Launchers: `hgt-pipeline` (headless), `hgt-interactive` (run_pipeline) |
+| `agents/` | `hgt-orchestrator` (executes a run), `hgt-expert` (explains/plans) |
+| `modes/hgt.md` | The `/hgt` orchestrator-posture mode (auto-discovered) |
+| `context/` | `hgt-awareness.md` (thin, always) · `hgt-runbook.md` (heavy, on-demand) |
+| `pipelines/` | `hgt.dot` (the attractor graph) · `ledger.py` (stdlib transfer ledger) |
+| `examples/opencode/` | Worked instance: opencode → newtui (py) + newtui-rust |
+| `docs/DESIGN_DECISIONS.md` | Why the graph is shaped this way (param + gate-parity calls) |
+
+## Verification gradient (before a PR)
+- **Structural:** `graphviz` parses `pipelines/hgt.dot`; `python3 pipelines/ledger.py stats` runs.
+- **Conformance:** `/audit-bundle` (conformance auditor) + the `validate-bundle-repo` recipe.
+- **Live run** (required when touching the graph/orchestration): drive HGT against a
+  scratch source+host and confirm one capability transfers green end-to-end.
+- Regenerate `bundle.dot`/`bundle.png` via the `bundle-to-dot` skill before the PR.
+
+## Pitfalls
+- Params reach `tool_command` only via env vars / run_pipeline, **not** the mounted
+  orchestrator's `config.params` (see DESIGN_DECISIONS.md). The graph uses `${VAR:?}`.
+- Never remove the `... && printf pass || printf fail` idiom from a gate node — a
+  non-zero exit leaves `tool.last_line` stale and misroutes.
+- `hgt-orchestrator` declares an inline non-pipeline orchestrator to avoid recursion
+  if spawned as a node — keep it.

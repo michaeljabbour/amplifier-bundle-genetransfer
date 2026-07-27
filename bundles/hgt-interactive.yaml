@@ -1,0 +1,12 @@
+# hgt-interactive — conversational launcher. Composes attractor-interactive (which
+# provides the run_pipeline tool + pipeline-runner agent + pipeline awareness) plus
+# hgt-core (the transfer tools, /hgt mode, and the orchestrator/expert agents).
+# This is the recommended engine path: run_pipeline seeds params as flat context keys
+# so they reach BOTH prompts and tool_command.
+bundle:
+  name: hgt-interactive
+  version: 0.1.0
+  description: Conversational launcher for the HGT attractor (run_pipeline available).
+includes:
+  - bundle: git+https://github.com/microsoft/amplifier-bundle-attractor@main#subdirectory=bundles/attractor-interactive.yaml
+  - bundle: hgt:behaviors/hgt-core

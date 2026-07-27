@@ -1,0 +1,19 @@
+# hgt-pipeline — headless/CI launcher. Runs hgt.dot on the real loop-pipeline engine.
+# NOTE: the mounted orchestrator substitutes params into PROMPTS only, not into
+# tool_command. The graph therefore reads its params as UPPERCASE ENV VARS (fail-loud)
+# — export them before `amplifier run`, e.g.:
+#   export DONOR_PATH=... HOST_A_PATH=... HOST_A_KIND=python HOST_B_PATH=... \
+#          HOST_B_KIND=rust FORGE_TOOL=~/.claude/skills/amplifier-skill-forge/tools/forge.py \
+#          LEDGER_FILE=pipelines/hgt-ledger.tsv SCOPE="..."
+# For param-driven runs that reach tool_command too, prefer run_pipeline (see README).
+bundle:
+  name: hgt-pipeline
+  version: 0.1.0
+  description: Headless launcher for the HGT attractor (loop-pipeline engine).
+includes:
+  - bundle: git+https://github.com/microsoft/amplifier-bundle-attractor@main#subdirectory=bundles/attractor-pipeline.yaml
+  - bundle: hgt:behaviors/hgt-core
+session:
+  orchestrator:
+    config:
+      dot_file: ../pipelines/hgt.dot
