@@ -35,7 +35,7 @@ into multiple hosts. `opencode → {newtui-py, newtui-rust}` is instance #1
 ## Install & run
 
 ```sh
-amplifier bundle add git+https://github.com/microsoft/amplifier-bundle-genetransfer@main
+amplifier bundle add git+https://github.com/michaeljabbour/amplifier-bundle-genetransfer@main
 amplifier bundle use hgt          # /hgt mode + hgt-orchestrator/hgt-expert agents
 ```
 
