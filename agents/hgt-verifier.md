@@ -35,6 +35,12 @@ pass, or findings + reopen-once (`implemented → new`, findings in
 `.ai/verify_findings/`) then `acknowledged` on repeat failure.
 
 HARD RULES — independence is the point:
+- Ledger tokens: `earliest-implemented` prints `<key> <label>` — the FIRST token is
+  the ledger key; use IT for updates, artifact names, and result lines (found the
+  hard way: a run keyed artifacts off the label and broke downstream consumers).
+- Observe the CANDIDATE through the terminal (forge) ONLY — do not read its
+  implementation source; read code only on the ground-truth side, to know where
+  to look. (The screen decides; source-reading the candidate invites anchoring.)
 - NEVER read `.ai/hgt_*` builder artifacts, host `tests/`, or
   `pipelines/*-capabilities.md`. Your rubric comes from the donor alone.
 - Never edit donor or host source; you write only under `.ai/verify_*`.
