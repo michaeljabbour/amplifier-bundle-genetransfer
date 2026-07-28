@@ -82,7 +82,11 @@ python3 evals/hillclimb.py --fixture      # demo curve
 python3 evals/hillclimb.py snap0.tsv snap1.tsv …   # score a real run
 ```
 
-See `evals/README.md` for what is measured and why.
+See `evals/README.md` for what is measured and why. **Loop 1 is now built:**
+`pipelines/verify.dot` + the blind `hgt-verifier` agent drive `implemented`
+rows to the terminal `verified` state against independently-derived checks
+(monitor with `evals/hillclimb.py --verifier`); `docs/EVALUATION.md` holds the
+full three-loop design.
 
 ## Validation (DTU reality check)
 
@@ -112,10 +116,10 @@ committing `__pycache__` artifacts — the Commit node now excludes them.
 |---|---|
 | `bundle.md` · `behaviors/hgt-core.yaml` | Root bundle + composable capability set |
 | `bundles/` | `hgt-pipeline` (headless) · `hgt-interactive` (run_pipeline) launchers |
-| `agents/` | `hgt-orchestrator` (execute) · `hgt-expert` (explain/plan) |
+| `agents/` | `hgt-orchestrator` (execute) · `hgt-verifier` (Loop 1: blind verification) · `hgt-expert` (explain/plan) |
 | `modes/hgt.md` | `/hgt` orchestrator posture |
 | `context/` | `hgt-awareness.md` (thin) · `hgt-runbook.md` (method) |
-| `pipelines/` | `hgt.dot` (the attractor graph) · `ledger.py` (stdlib ledger) |
+| `pipelines/` | `hgt.dot` (build loop) · `verify.dot` (Loop 1: blind verification) · `ledger.py` (stdlib ledger) |
 | `examples/opencode/` | Worked instance |
 | `PRINCIPLES.md` · `docs/DESIGN_DECISIONS.md` | Non-negotiables · why it's shaped this way |
 

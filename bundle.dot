@@ -8,7 +8,7 @@ digraph hgt {
     nodesep=0.6
     ranksep=0.7
     bgcolor="white"
-    source_hash="657403bffa44748f8d6b5641e23995c31f4f976fdf98ded6d19bfb4ef7c58e11"
+    source_hash="29c2df7f6bc4cd2d4a0f88307b1e862fa63e3b6bc51dcb19fb45231f7fe2a48e"
 
     node [fontname="Helvetica", fontsize=11, style="filled,rounded"]
     edge [fontname="Helvetica", fontsize=9]
@@ -21,7 +21,7 @@ digraph hgt {
         fillcolor="#f9f9f9"
         color="#999999"
 
-        beh_hgt_core [label="hgt-core\n7 tools · 1 ctx\n~1100 tok", shape=box, fillcolor="#e0f2f1", style="filled,rounded"]
+        beh_hgt_core [label="hgt-core\n7 tools · 1 ctx\n~1336 tok", shape=box, fillcolor="#e0f2f1", style="filled,rounded"]
     }
 
     subgraph cluster_standalones {
@@ -42,6 +42,7 @@ digraph hgt {
 
         agt_hgt_expert [label="hgt-expert\n~161 tok desc", shape=box, fillcolor="#c8e6c9", style="filled,rounded"]
         agt_hgt_orchestrator [label="hgt-orchestrator\n~174 tok desc", shape=box, fillcolor="#c8e6c9", style="filled,rounded"]
+        agt_hgt_verifier [label="hgt-verifier\n~230 tok desc", shape=box, fillcolor="#c8e6c9", style="filled,rounded"]
     }
 
     subgraph cluster_context {
@@ -77,6 +78,7 @@ digraph hgt {
 
     root_hgt -> beh_hgt_core [label="composes"]
     beh_hgt_core -> agt_hgt_orchestrator [label="owns"]
+    beh_hgt_core -> agt_hgt_verifier [label="owns"]
     beh_hgt_core -> agt_hgt_expert [label="owns"]
     beh_hgt_core -> ctx_hgt_awareness_md [style=dotted, color=purple]
     sta_hgt_interactive -> root_hgt [label="extends", style=dashed]

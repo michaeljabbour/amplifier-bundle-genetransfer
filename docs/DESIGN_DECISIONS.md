@@ -61,3 +61,13 @@ it), raises `Session '<id>' not found`, and never writes transcript/metadata —
 no resume, no events.jsonl, no observability. Proven by A/B in a DTU (anchors
 persisted; hgt did not; same cwd, same prompt). `hooks-logging` is therefore part
 of hgt-core, config mirroring foundation `behaviors/logging.yaml`.
+
+## 10. Loop 1 — the blind verifier is a separate GRAPH, not a node in the build loop
+Independence is about who writes the rubric, so the verifier lives in its own
+pipeline (`verify.dot`) with its own queue (`ledger.py earliest-implemented`), its
+own artifacts namespace (`.ai/verify_*`), and explicit read-prohibitions on every
+builder artifact. `verified` is the terminal ledger state; a verification failure
+reopens the row once (implemented → new, findings attached — verifier→builder flow
+is the allowed direction) and then acknowledges. The run monitor grows a
+`--verifier` mode whose protected scalar is `verified_frac` and which tolerates the
+now-legal reopen dip while still rejecting any row that leaves `verified`.

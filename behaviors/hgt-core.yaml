@@ -34,6 +34,7 @@ hooks:
 agents:
   include:
     - hgt:hgt-orchestrator
+    - hgt:hgt-verifier
     - hgt:hgt-expert
 context:
   # THIN (<500 tokens) — accumulates into every composer. The heavy runbook is

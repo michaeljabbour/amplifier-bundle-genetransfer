@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
-"""Fitness function for the HGT attractor — the scalar the run hill-climbs.
+"""Fitness function for the HGT attractor — the scalars the run monitor tracks.
 
-WHAT IS BEING MEASURED (the criterion, not the code): the attractor's whole job is
-to drive every ledger row to a GREEN-GATED pr (state=implemented). A row reaches
-`implemented` ONLY after both gates pass (the Commit node marks it), so
-`implemented_frac` already bakes in "gate passed" as a precondition — you cannot
-score by lowering quality. Fitness is deliberately conservative: `implemented_frac`
-is the PROTECTED scalar the harness climbs and it must never decrease across a
-healthy run (a monotone ratchet). `acknowledged` (gave-up / human handoff) drains
-the queue but does NOT raise fitness — so "do less" scores nothing.
+WHAT IS BEING MEASURED: the attractor drives every ledger row to a green-gated PR
+(`implemented`), and Loop 1 (the blind verifier, pipelines/verify.dot) then drives
+it to `verified` — independently confirmed against the donor's real behavior.
+`implemented` bakes in the builder's own gates; `verified` bakes in an INDEPENDENT
+rubric. `acknowledged` (gave up / failed verification twice) earns nothing.
 
-Ledger row: <slug>\t<target>\t<state>   state in {new, implemented, acknowledged}
+Scalars:
+  implemented_frac  rows the builder landed (intermediate once Loop 1 is in play)
+  verified_frac     rows independently confirmed — Loop 1's protected scalar
+  landed_frac       implemented + verified — the legacy protected scalar
+  score             == landed_frac (headline)
+
+Ledger row: <slug>\t<target>\t<state>  state in {new, implemented, verified, acknowledged}
 
 Usage:
     python3 evals/fitness.py <ledger.tsv>
@@ -37,16 +40,20 @@ def fitness(rows: list[tuple[str, str, str]]) -> dict:
     total = len(rows)
     denom = total or 1
     impl = sum(1 for r in rows if r[2] == "implemented")
+    ver = sum(1 for r in rows if r[2] == "verified")
     ack = sum(1 for r in rows if r[2] == "acknowledged")
     new = sum(1 for r in rows if r[2] == "new")
     return {
         "total": total,
         "implemented": impl,
+        "verified": ver,
         "acknowledged": ack,
         "new": new,
-        "implemented_frac": round(impl / denom, 4),  # PROTECTED — climb this
-        "resolved_frac": round((impl + ack) / denom, 4),  # queue drained
-        "score": round(impl / denom, 4),  # headline fitness
+        "implemented_frac": round(impl / denom, 4),
+        "verified_frac": round(ver / denom, 4),  # Loop-1 PROTECTED scalar
+        "landed_frac": round((impl + ver) / denom, 4),  # legacy PROTECTED scalar
+        "resolved_frac": round((impl + ver + ack) / denom, 4),
+        "score": round((impl + ver) / denom, 4),
     }
 
 

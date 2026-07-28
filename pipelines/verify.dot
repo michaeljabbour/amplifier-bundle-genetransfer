@@ -1,0 +1,67 @@
+// HGT — Loop 1: BLIND VERIFICATION (outer loop; runs after transfer loops land rows).
+//
+// For each ledger row in state `implemented`, a verifier that is BLIND to every
+// builder artifact independently derives acceptance checks from the DONOR (the
+// executable ground truth) and validates the host(s). Pass -> terminal state
+// `verified`. Fail -> findings recorded; the row reopens ONCE (implemented -> new,
+// so the transfer loop rebuilds with findings available), then `acknowledged`.
+//
+// WHY: the transfer loop authors the very tests/probe it must pass (self-grading).
+// Deterministic execution is not independence — independence is about who WRITES
+// the rubric. This loop is the independent rubric-writer. Verifier -> builder info
+// flow is allowed (.ai/verify_findings/); builder -> verifier is forbidden.
+//
+// ENGINE: attractor loop-pipeline (same contract as hgt.dot: routing on last stdout
+// line, `... && printf pass || printf fail` idiom is load-bearing, env-var params).
+//   DONOR_PATH   abs path to the donor (ground truth; read+observe only)
+//   HOST_A_PATH  abs path to host A (LEDGER_FILE + pipelines/ledger.py live here)
+//   HOST_B_PATH  abs path to host B (checked when the row's target is ab|split)
+//   FORGE_TOOL   abs path to amplifier-skill-forge/tools/forge.py
+//   LEDGER_FILE  ledger path relative to HOST_A_PATH
+//
+// MODELS: claude-opus-4-8 on LLM nodes.
+
+digraph hgt_verify {
+    graph [
+        goal="Loop 1 — blind verification. For each ledger row in state 'implemented', independently confirm the host(s) exhibit the DONOR's behavior for that capability. Derive your own checks from the donor (executable ground truth). NEVER read builder artifacts (.ai/hgt_*), host tests, or capability cards — independence is the point. Pass -> 'verified' (terminal). Fail -> findings, reopen once (-> new), then 'acknowledged'. Never edit donor or host source.",
+        default_fidelity="truncate",
+        default_max_retry="3"
+    ]
+
+    start [shape=Mdiamond]
+
+    CheckQueue [shape=parallelogram,
+        tool_command=": \"${DONOR_PATH:?set DONOR_PATH}\" \"${HOST_A_PATH:?set HOST_A_PATH}\" \"${FORGE_TOOL:?set FORGE_TOOL}\" \"${LEDGER_FILE:?set LEDGER_FILE}\"; cd \"$HOST_A_PATH\" && test \"$(LEDGER_FILE=$LEDGER_FILE python3 pipelines/ledger.py earliest-implemented)\" = NONE && printf done || printf process"]
+
+    SelectRow [shape=parallelogram,
+        tool_command="cd \"$HOST_A_PATH\" && mkdir -p .ai/verify_checks .ai/verify_findings && set -- $(LEDGER_FILE=$LEDGER_FILE python3 pipelines/ledger.py earliest-implemented) && { echo \"SLUG=$1\"; echo \"TARGET=$2\"; } > .ai/verify_current.env && printf ready"]
+
+    DeriveChecks [shape=box, llm_provider="anthropic", llm_model="claude-opus-4-8",
+        prompt="You are the BLIND VERIFIER. Read $HOST_A_PATH/.ai/verify_current.env for SLUG and TARGET. GROUND TRUTH ONLY: study the capability named SLUG in the donor at $DONOR_PATH — read its code and boot it via $FORGE_TOOL to observe the REAL behavior. FORBIDDEN (your independence is the point): reading any .ai/hgt_* builder artifact, any tests/ in the host repo(s), or pipelines/*-capabilities.md. Derive YOUR OWN acceptance checks from the donor's observable behavior and write $HOST_A_PATH/.ai/verify_checks/$SLUG.sh: a bash script using $FORGE_TOOL (env $FORGE) that boots the REAL host app at $HOST_A_PATH (and $HOST_B_PATH too when TARGET is ab or split) and asserts the donor-equivalent behavior from screen/grep; exit 0 iff it holds. Write nothing outside .ai/verify_checks/. $goal"]
+
+    RunChecks [shape=parallelogram,
+        tool_command="cd \"$HOST_A_PATH\" && set -a && . .ai/verify_current.env && set +a && export FORGE=\"$FORGE_TOOL\" && python3 \"$FORGE\" doctor >/tmp/hgt_verify_doctor 2>&1 && bash .ai/verify_checks/$SLUG.sh >/tmp/hgt_verify 2>&1 && printf pass || printf fail"]
+
+    MarkVerified [shape=parallelogram,
+        tool_command="cd \"$HOST_A_PATH\" && set -a && . .ai/verify_current.env && set +a && LEDGER_FILE=$LEDGER_FILE python3 pipelines/ledger.py update $SLUG verified >/dev/null && printf next"]
+
+    RecordFindings [shape=box, llm_provider="anthropic", llm_model="claude-opus-4-8",
+        prompt="Your verification checks failed. Read /tmp/hgt_verify, /tmp/hgt_verify_doctor and your own script $HOST_A_PATH/.ai/verify_checks/$SLUG.sh (SLUG from .ai/verify_current.env). Write $HOST_A_PATH/.ai/verify_findings/$SLUG.md: what the donor does, what the host does instead, and the exact failing assertion. FIRST LINE must be exactly FLAKE if the ONLY failure is a forge timing/screen-scrape artifact, otherwise exactly DEFECT. Do not edit code or your checks. $goal"]
+
+    ReopenGate [shape=parallelogram,
+        tool_command="cd \"$HOST_A_PATH\" && set -a && . .ai/verify_current.env && set +a; if head -1 .ai/verify_findings/$SLUG.md 2>/dev/null | grep -q FLAKE && ! test -f .ai/verify_flake_$SLUG; then touch .ai/verify_flake_$SLUG && printf recheck; elif test -f .ai/verify_reopened_$SLUG; then LEDGER_FILE=$LEDGER_FILE python3 pipelines/ledger.py update $SLUG acknowledged >/dev/null && printf next; else touch .ai/verify_reopened_$SLUG && LEDGER_FILE=$LEDGER_FILE python3 pipelines/ledger.py update $SLUG new >/dev/null && printf next; fi"]
+
+    exit [shape=Msquare]
+
+    start -> CheckQueue
+    CheckQueue -> exit      [condition="context.tool.last_line=done"]
+    CheckQueue -> SelectRow [condition="context.tool.last_line=process"]
+    SelectRow -> DeriveChecks
+    DeriveChecks -> RunChecks
+    RunChecks -> MarkVerified   [condition="context.tool.last_line=pass"]
+    RunChecks -> RecordFindings [condition="context.tool.last_line=fail"]
+    RecordFindings -> ReopenGate
+    ReopenGate -> RunChecks    [condition="context.tool.last_line=recheck"]
+    ReopenGate -> CheckQueue   [condition="context.tool.last_line=next", loop_restart="true"]
+    MarkVerified -> CheckQueue [loop_restart="true"]
+}

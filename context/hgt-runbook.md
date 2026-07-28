@@ -79,3 +79,16 @@ await run_pipeline(open("pipelines/hgt.dot").read(),
 
 Or export the same names as UPPERCASE env vars before `amplifier run` — the graph's
 `${VAR:?}` guards fail loud if any are missing.
+
+## Loop 1 — blind verification (after rows land)
+
+Rows landed by the build loop are `implemented` — gated, but by gates the flow
+itself authored. Loop 1 (`hgt:pipelines/verify.dot` · the `hgt-verifier` agent)
+independently drives them to the terminal state **`verified`**: a verifier BLIND to
+every builder artifact derives its own checks from the ground truth (the donor app)
+and validates through a real terminal. Fail ⇒ findings in `.ai/verify_findings/`,
+row reopens ONCE (`implemented → new` — the build loop rebuilds with findings
+readable), then `acknowledged`. Verifier → builder info flow is allowed; builder →
+verifier is forbidden.
+Run order: build loop to quiescence → verify loop to quiescence → done when every
+row is `verified` or `acknowledged`. Monitor with `evals/hillclimb.py --verifier`.
