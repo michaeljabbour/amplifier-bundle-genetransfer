@@ -29,6 +29,7 @@ branch) live there, not here.
 - **Live run** (required when touching the graph/orchestration): drive HGT against a
   scratch source+host and confirm one capability transfers green end-to-end.
 - Regenerate `bundle.dot`/`bundle.png` via the `bundle-to-dot` skill before the PR.
+- Regenerate the pipeline doc diagrams after any graph change: `python3 docs/diagrams/generate.py` (derived views; the executable graphs in `pipelines/` are never edited by it).
 
 ## Pitfalls
 - Params reach `tool_command` only via env vars / run_pipeline, **not** the mounted

@@ -84,6 +84,11 @@ python3 evals/hillclimb.py snap0.tsv snap1.tsv …   # score a real run
 
 See `evals/README.md` for what is measured and why.
 
+## Diagrams
+
+- **Pipeline flow** (the attractor loop, edge labels = routing): [`docs/diagrams/hgt.png`](docs/diagrams/hgt.png) — derived from the executable graph by `python3 docs/diagrams/generate.py`.
+- **Bundle structure** (composition + token costs): [`bundle.png`](bundle.png) / [`bundle.dot`](bundle.dot) (bundle-to-dot v3).
+
 ## Layout
 
 | Path | What |
