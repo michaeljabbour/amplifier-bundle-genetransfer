@@ -1,7 +1,7 @@
 ---
 bundle:
   name: hgt
-  version: 0.1.0
+  version: 0.1.1
   description: >
     HGT (Horizontal Gene-Transfer) — a parameterized capability-transfer attractor.
     Ports a capability from a donor repo (any language) into one or more host repos,

@@ -2,18 +2,18 @@ digraph hgt {
     rankdir=LR
     fontname="Helvetica"
     fontsize=12
-    label="hgt v0.1.0 — bundle repo"
+    label="hgt v0.1.1 — bundle repo"
     labelloc=t
     labeljust=c
     nodesep=0.6
     ranksep=0.7
     bgcolor="white"
-    source_hash="f00637a1cc621304625cfb6e45862590ffff71a32f56d8df2c1134290ef4e94e"
+    source_hash="657403bffa44748f8d6b5641e23995c31f4f976fdf98ded6d19bfb4ef7c58e11"
 
     node [fontname="Helvetica", fontsize=11, style="filled,rounded"]
     edge [fontname="Helvetica", fontsize=9]
 
-    root_hgt [label="hgt v0.1.0\n0 tools · 0 agents\n~414 tok aggregate", shape=box, fillcolor="#80cbc4", style="filled,rounded,bold", penwidth=2]
+    root_hgt [label="hgt v0.1.1\n0 tools · 0 agents\n~414 tok aggregate", shape=box, fillcolor="#80cbc4", style="filled,rounded,bold", penwidth=2]
 
     subgraph cluster_behaviors {
         label="Behaviors"
@@ -21,7 +21,7 @@ digraph hgt {
         fillcolor="#f9f9f9"
         color="#999999"
 
-        beh_hgt_core [label="hgt-core\n6 tools · 1 ctx\n~943 tok", shape=box, fillcolor="#e0f2f1", style="filled,rounded"]
+        beh_hgt_core [label="hgt-core\n7 tools · 1 ctx\n~1100 tok", shape=box, fillcolor="#e0f2f1", style="filled,rounded"]
     }
 
     subgraph cluster_standalones {

@@ -32,6 +32,7 @@ branch) live there, not here.
 - Regenerate the pipeline doc diagrams after any graph change: `python3 docs/diagrams/generate.py` (derived views; the executable graphs in `pipelines/` are never edited by it).
 
 ## Pitfalls
+- NEVER remove `hooks-logging` from the behavior: it is what makes sessions durable (creates the session dir + events.jsonl). Without it `amplifier run` finishes but persists nothing and errors `Session '<id>' not found` at finalize — found via DTU reality check.
 - Params reach `tool_command` only via env vars / run_pipeline, **not** the mounted
   orchestrator's `config.params` (see DESIGN_DECISIONS.md). The graph uses `${VAR:?}`.
 - Never remove the `... && printf pass || printf fail` idiom from a gate node — a

@@ -52,3 +52,12 @@ The gate/branch/commit dispatch is inlined for 1–2 hosts keyed by `kind`. A th
 kind or an N-host run lifts the dispatch into `pipelines/hgt_gates.sh` + `hgt_forge.sh`
 (kind → gate/boot), keeping the `.dot` a pure orchestrator. Not built yet — until a
 real second consumer exists, that indirection is ceremony.
+
+## 9. Session durability requires the logging hook (DTU reality-check finding)
+A self-contained bundle that omits `hooks-logging` produces runs whose sessions
+exist only in memory: the CLI's end-of-run finalizer looks the session up in the
+store (`session_store.py`), finds no directory (the logging hook is what creates
+it), raises `Session '<id>' not found`, and never writes transcript/metadata —
+no resume, no events.jsonl, no observability. Proven by A/B in a DTU (anchors
+persisted; hgt did not; same cwd, same prompt). `hooks-logging` is therefore part
+of hgt-core, config mirroring foundation `behaviors/logging.yaml`.
