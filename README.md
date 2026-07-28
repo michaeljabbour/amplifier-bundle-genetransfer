@@ -84,6 +84,23 @@ python3 evals/hillclimb.py snap0.tsv snap1.tsv …   # score a real run
 
 See `evals/README.md` for what is measured and why.
 
+## Validation (DTU reality check)
+
+The smallest successful hillclimber has been proven end-to-end in an isolated
+Digital Twin Universe (bundle v0.1.1, 2026-07-28): a real `amplifier run --bundle
+hgt` session (`58c7b5b6…`, claude-opus-4-8, 32 persisted messages) transferred one
+capability (`shout-flag`) donor→host — behavioral contract documented (never
+copied), unit gate + real-terminal forge gate genuinely green, branch
+`hgt/shout-flag` pushed, `main` untouched, ledger `new → implemented` — and the
+bundle's own eval scored the run **CLIMBING ✓** (0.00 → 1.00).
+
+Sessions are durable: root session persisted with `events.jsonl` +
+`metadata.json` + `transcript.jsonl` and is resumable via `amplifier session
+resume`. That property is load-bearing — the reality check is what exposed the
+v0.1.1 `hooks-logging` fix (without it, runs completed but persisted nothing;
+see `docs/DESIGN_DECISIONS.md` §9). The same check also caught the pipeline
+committing `__pycache__` artifacts — the Commit node now excludes them.
+
 ## Diagrams
 
 - **Pipeline flow** (the attractor loop, edge labels = routing): [`docs/diagrams/hgt.png`](docs/diagrams/hgt.png) — derived from the executable graph by `python3 docs/diagrams/generate.py`.

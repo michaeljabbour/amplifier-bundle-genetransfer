@@ -83,7 +83,7 @@ digraph hgt {
 
     // --- converged: commit + PR per targeted host, mark implemented ---
     Commit [shape=parallelogram,
-        tool_command="cd \"$HOST_A_PATH\" && set -a && . .ai/hgt_current.env && set +a && git add -A -- ':!.ai' && git commit -q -m \"feat(hgt): $SLUG\" && git push -q -u origin HEAD && gh pr create --fill --base main --head hgt/$SLUG --label hgt >/tmp/hgt_pr_a 2>&1; case \"$TARGET\" in ab|split) cd \"$HOST_B_PATH\" && git add -A && git commit -q -m \"feat(hgt): $SLUG\" && git push -q -u origin HEAD && gh pr create --fill --base main --head hgt/$SLUG --label hgt >/tmp/hgt_pr_b 2>&1;; esac; cd \"$HOST_A_PATH\" && LEDGER_FILE=$LEDGER_FILE python3 pipelines/ledger.py update $SLUG implemented >/dev/null && printf next"]
+        tool_command="cd \"$HOST_A_PATH\" && set -a && . .ai/hgt_current.env && set +a && git add -A -- ':!.ai' ':!*.pyc' ':!__pycache__' && git commit -q -m \"feat(hgt): $SLUG\" && git push -q -u origin HEAD && gh pr create --fill --base main --head hgt/$SLUG --label hgt >/tmp/hgt_pr_a 2>&1; case \"$TARGET\" in ab|split) cd \"$HOST_B_PATH\" && git add -A && git commit -q -m \"feat(hgt): $SLUG\" && git push -q -u origin HEAD && gh pr create --fill --base main --head hgt/$SLUG --label hgt >/tmp/hgt_pr_b 2>&1;; esac; cd \"$HOST_A_PATH\" && LEDGER_FILE=$LEDGER_FILE python3 pipelines/ledger.py update $SLUG implemented >/dev/null && printf next"]
 
     // --- could not converge: hand back to a human, keep the queue moving ---
     MarkBlocked [shape=parallelogram,
