@@ -1,0 +1,84 @@
+digraph hgt {
+    rankdir=LR
+    fontname="Helvetica"
+    fontsize=12
+    label="hgt v0.1.0 — bundle repo"
+    labelloc=t
+    labeljust=c
+    nodesep=0.6
+    ranksep=0.7
+    bgcolor="white"
+    source_hash="f00637a1cc621304625cfb6e45862590ffff71a32f56d8df2c1134290ef4e94e"
+
+    node [fontname="Helvetica", fontsize=11, style="filled,rounded"]
+    edge [fontname="Helvetica", fontsize=9]
+
+    root_hgt [label="hgt v0.1.0\n0 tools · 0 agents\n~414 tok aggregate", shape=box, fillcolor="#80cbc4", style="filled,rounded,bold", penwidth=2]
+
+    subgraph cluster_behaviors {
+        label="Behaviors"
+        style="filled"
+        fillcolor="#f9f9f9"
+        color="#999999"
+
+        beh_hgt_core [label="hgt-core\n6 tools · 1 ctx\n~943 tok", shape=box, fillcolor="#e0f2f1", style="filled,rounded"]
+    }
+
+    subgraph cluster_standalones {
+        label="Standalone Bundles"
+        style="filled"
+        fillcolor="#f9f9f9"
+        color="#999999"
+
+        sta_hgt_interactive [label="hgt-interactive", shape=box, fillcolor="#80cbc4", style="filled,rounded"]
+        sta_hgt_pipeline [label="hgt-pipeline", shape=box, fillcolor="#80cbc4", style="filled,rounded"]
+    }
+
+    subgraph cluster_agents {
+        label="Agents"
+        style="filled"
+        fillcolor="#f9f9f9"
+        color="#999999"
+
+        agt_hgt_expert [label="hgt-expert\n~161 tok desc", shape=box, fillcolor="#c8e6c9", style="filled,rounded"]
+        agt_hgt_orchestrator [label="hgt-orchestrator\n~174 tok desc", shape=box, fillcolor="#c8e6c9", style="filled,rounded"]
+    }
+
+    subgraph cluster_context {
+        label="Context Files"
+        style="filled"
+        fillcolor="#f9f9f9"
+        color="#999999"
+
+        ctx_hgt_awareness_md [label="hgt-awareness.md\n~252 tok", shape=box, fillcolor="#e1bee7", style="filled,rounded"]
+    }
+
+    subgraph cluster_legend {
+        label="Legend"
+        style="filled"
+        fillcolor="white"
+        color="#cccccc"
+        fontsize=9
+
+        leg_root [label="root bundle", shape=box, fillcolor="#80cbc4", style="filled,rounded,bold", fontsize=9]
+        leg_behavior [label="behavior", shape=box, fillcolor="#e0f2f1", style="filled,rounded", fontsize=9]
+        leg_agent [label="agent", shape=box, fillcolor="#c8e6c9", style="filled,rounded", fontsize=9]
+        leg_module [label="module", shape=box, fillcolor="#bbdefb", style="filled,rounded", fontsize=9]
+        leg_provider [label="provider", shape=box, fillcolor="#e0e0e0", style="filled,rounded", fontsize=9]
+        leg_context [label="context", shape=box, fillcolor="#e1bee7", style="filled,rounded", fontsize=9]
+        leg_standalone [label="standalone", shape=box, fillcolor="#80cbc4", style="filled,rounded", fontsize=9]
+        leg_experiment [label="experiment", shape=box, fillcolor="#e1bee7", style="filled,rounded", fontsize=9]
+        leg_ext_cost [label="ext+cost", shape=box, fillcolor="#80cbc4", style="dashed", color="red", penwidth=2, fontsize=9]
+        leg_ext_muted [label="ext+no-cost", shape=box, fillcolor="#f5f5f5", style="dashed", fontsize=9]
+    }
+
+    disclaimer [label="Token estimates: ~4 chars/token\nSolid border = local (counted)\nDashed + red = external, hidden cost (not counted)\nDashed + muted = external, no cost\nExcludes: sub-session costs, runtime-dynamic", shape=note, fillcolor="#eceff1", style="filled", fontsize=9]
+
+
+    root_hgt -> beh_hgt_core [label="composes"]
+    beh_hgt_core -> agt_hgt_orchestrator [label="owns"]
+    beh_hgt_core -> agt_hgt_expert [label="owns"]
+    beh_hgt_core -> ctx_hgt_awareness_md [style=dotted, color=purple]
+    sta_hgt_interactive -> root_hgt [label="extends", style=dashed]
+    sta_hgt_pipeline -> root_hgt [label="extends", style=dashed]
+}
