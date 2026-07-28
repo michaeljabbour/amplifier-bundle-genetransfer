@@ -33,6 +33,12 @@ regressed somewhere, with the offending step named.
 
 ## Honest limits
 
+**Scope (sharpened after external review):** this is the INNER run monitor.
+Because ledger rows only ever move forward, within-run monotonicity is close to
+tautological — this eval detects broken runs, it cannot rank technique variants.
+The technique-level objective function (frozen answer key, external grading,
+v1-vs-v2 on identical tasks) is designed in `docs/EVALUATION.md`.
+
 This eval scores the ATTRACTOR's convergence behavior — progress, monotonicity, and
 queue integrity. It does **not** re-judge the quality of an individual transfer
 beyond what the gates enforced (that judgment lives in the gates themselves and in

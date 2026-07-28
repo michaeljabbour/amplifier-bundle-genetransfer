@@ -10,6 +10,9 @@ prints the fitness curve, then asserts the RATCHET:
 A violation is a Goodhart / regression tripwire and fails the eval (exit 1). This
 is the property a healthy attractor run has: it only ever climbs.
 
+SCOPE: inner run monitor. Rows only move forward, so this cannot rank technique
+variants (v1 vs v2) — see docs/EVALUATION.md for the external objective function.
+
 Usage:
     python3 evals/hillclimb.py <snap0.tsv> <snap1.tsv> ...   # explicit series
     python3 evals/hillclimb.py --fixture                     # bundled demo climb
