@@ -32,20 +32,57 @@ into multiple hosts. `opencode → {newtui-py, newtui-rust}` is instance #1
   heterogeneous hosts land the same capability in different layers via the ledger
   `target` (`a` / `ab` / `split`).
 
-## Install & run
+## Usage
+
+**1. Install and activate**
 
 ```sh
 amplifier bundle add git+https://github.com/michaeljabbour/amplifier-bundle-genetransfer@main
 amplifier bundle use hgt          # /hgt mode + hgt-orchestrator/hgt-expert agents
 ```
 
-Two launch paths:
-- **Orchestrator-as-engine (recommended, proven):** activate `/hgt` or delegate to
-  `hgt-orchestrator` — it gap-checks, seeds the ledger, and runs a max-parallel wave
-  of self-delegated workers in git worktrees. This is how the campaigns actually ran.
-- **run_pipeline engine:** use `bundles/hgt-interactive.yaml` (provides `run_pipeline`)
-  and pass params (`DONOR_PATH`, `HOST_A_PATH`, `HOST_A_KIND`, …). See
-  `context/hgt-runbook.md`.
+**2. Define the three knobs** (see `examples/opencode/` for a filled-in instance):
+
+```sh
+export DONOR_PATH=/abs/path/to/donor            # source repo, read-only, any language
+export HOST_A_PATH=/abs/path/to/hostA HOST_A_KIND=python
+export HOST_B_PATH=/abs/path/to/hostB HOST_B_KIND=rust     # optional second host
+export FORGE_TOOL=~/.claude/skills/amplifier-skill-forge/tools/forge.py
+export LEDGER_FILE=pipelines/hgt-ledger.tsv     # relative to HOST_A_PATH
+export SCOPE="which capabilities transfer; what's excluded"
+```
+
+**3. Gap-check + seed the ledger** — only capabilities absent from every host get a
+row (`python3 pipelines/ledger.py add <slug> <target>` with `LEDGER_FILE` set;
+target ∈ `a` | `ab` | `split`). Not sure? Ask `hgt-expert` to plan the instance.
+
+**4. Run** — two launch paths:
+- **Orchestrator-as-engine (recommended, proven):** activate `/hgt` or
+  `delegate(agent="hgt:hgt-orchestrator", …)` — it gap-checks, seeds, and runs a
+  max-parallel wave of self-delegated workers in git worktrees.
+- **run_pipeline engine:** `bundles/hgt-interactive.yaml` provides `run_pipeline`;
+  pass the same names as params. (`bundles/hgt-pipeline.yaml` = headless; export the
+  env vars and launch from the repo root.) See `context/hgt-runbook.md`.
+
+**5. Monitor & finish** — the ledger is the source of truth:
+`LEDGER_FILE=… python3 pipelines/ledger.py stats`. Done = no `new` rows: every row
+is `implemented` (green-gated PR open) or `acknowledged` (human handoff, with a plan
+saved under `.ai/hgt_blocked/`).
+
+## Evaluation (hill-climbing)
+
+The bundle ships a simple hill-climbing eval (`evals/`): fitness =
+`implemented_frac` (quality is a precondition — only green-gated rows count), and a
+**ratchet check** — across successive ledger snapshots the fitness must never fall
+and no row may un-complete. Regressions fail the eval.
+
+```sh
+python3 evals/hillclimb.py --self-test    # prove the detector works
+python3 evals/hillclimb.py --fixture      # demo curve
+python3 evals/hillclimb.py snap0.tsv snap1.tsv …   # score a real run
+```
+
+See `evals/README.md` for what is measured and why.
 
 ## Layout
 

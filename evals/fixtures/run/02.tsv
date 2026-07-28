@@ -1,0 +1,3 @@
+apply-patch-tool	python	implemented
+prompt-stash	both	implemented
+codemode-execute	split	new
